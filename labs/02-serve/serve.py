@@ -66,6 +66,14 @@ def main() -> int:
         print(f"  endpoints: http://localhost:{port}/v1/embeddings")
     print(f"\n  {' '.join(cmd)}\n")
 
+    # On Windows, os.execv re-joins argv without quoting — paths with spaces
+    # (e.g. "AI VinUni") get split and llama-server sees a bogus argument.
+    # subprocess.run keeps the list form, so each path stays one argv entry.
+    if sys.platform == "win32":
+        try:
+            return subprocess.run(cmd, check=False).returncode
+        except KeyboardInterrupt:
+            return 0
     try:
         os.execv(cmd[0], cmd)          # hand the terminal over; Ctrl-C stops the server
     except OSError:
